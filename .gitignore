@@ -1,11 +1,7 @@
-.env
-.env.local
-.env.*.local
-.vercel
+node_modules/
+.idea/
 __pycache__/
 *.pyc
-.venv/
-venv/
-.DS_Store
-
+.env
 .vercel
+*.log
