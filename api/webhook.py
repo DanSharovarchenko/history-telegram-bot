@@ -317,6 +317,7 @@ async def handle_message(update: Update, bot: Bot) -> None:
         await remove_subscriber(chat_id)
         await bot.send_message(chat_id, "Вы отписались. Возвращайтесь через /start 👋")
 
+
     # /today
     elif cmd == "/today":
         cats = await get_user_categories(chat_id)
@@ -326,6 +327,9 @@ async def handle_message(update: Update, bot: Bot) -> None:
             chat_id, fact,
             parse_mode="HTML", disable_web_page_preview=True,
         )
+    elif cmd == "/hide_keyboard":
+        from telegram import ReplyKeyboardRemove
+        await bot.send_message(chat_id, "Клавиатура убрана.", reply_markup=ReplyKeyboardRemove())
     elif cmd == "/help":
         keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton("📩 Связаться с автором", url="https://t.me/yan3danya")]

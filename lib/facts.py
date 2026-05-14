@@ -246,3 +246,26 @@ async def get_total_facts_count() -> int:
     facts = _load_facts()
     total = sum(len(items) for items in facts.values())
     return total
+def get_random_fact_structured():
+    """Возвращает случайный факт в виде словаря для JSON API (синхронная версия)."""
+    facts = _load_facts()
+    all_items = []
+    for date_key, items in facts.items():
+        for item in items:
+            copy = item.copy()
+            copy['date_key'] = date_key
+            all_items.append(copy)
+    if not all_items:
+        return {"error": "Нет фактов"}
+    chosen = random.choice(all_items)
+    month, day = chosen['date_key'].split('-')
+    # Используем текущий год для корректного создания date, но для форматирования важен только месяц и день
+    date_obj = datetime.date(2000, int(month), int(day))
+    date_str = _format_date_ru(date_obj)
+    return {
+        "text": chosen['text'],
+        "year": chosen.get('year'),
+        "link": chosen.get('link'),
+        "date_str": date_str,
+        "date_key": chosen['date_key']
+    }
