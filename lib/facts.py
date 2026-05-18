@@ -17,9 +17,9 @@ RU_MONTHS = {
 
 # Все допустимые категории (для подсказки пользователю)
 ALL_CATEGORIES = [
-    "россия", "европа", "америка", "азия",
-    "война", "политика", "наука", "космос",
-    "культура", "образование", "медицина", "технологии",
+    "Россия", "Европа", "Америка", "Азия",
+    "Война", "Политика", "Наука", "Космос",
+    "Культура", "Образование", "Медицина", "Технологии", "Африка"
 ]
 
 
@@ -268,4 +268,51 @@ def get_random_fact_structured():
         "link": chosen.get('link'),
         "date_str": date_str,
         "date_key": chosen['date_key']
+    }
+def get_fact_for_date_structured(date_str: str):
+    """
+    Принимает дату в формате YYYY-MM-DD или MM-DD.
+    Возвращает структурированный словарь для JSON API или None.
+    """
+    # Преобразуем YYYY-MM-DD в MM-DD
+    if len(date_str) == 10 and date_str[4] == '-':
+        mmdd = date_str[5:7] + '-' + date_str[8:10]
+    else:
+        mmdd = date_str
+    facts = _load_facts()
+    items = facts.get(mmdd, [])
+    if not items:
+        return None
+    # Берём первый факт (или можно ротировать по году, но для простоты первый)
+    item = items[0]
+    return {
+        "text": item['text'],
+        "year": item.get('year'),
+        "link": item.get('link'),
+        "date": mmdd
+    }
+
+def get_random_quiz_structured():
+    """Возвращает случайный вопрос викторины (структурированный) или None."""
+    facts = _load_facts()
+    all_quizzes = []
+    for date_key, items in facts.items():
+        for item in items:
+            if "quiz" in item:
+                q = item["quiz"].copy()
+                # Формируем дату для отображения
+                month, day = date_key.split('-')
+                date_obj = datetime.date(2000, int(month), int(day))
+                q["date_str"] = _format_date_ru(date_obj)
+                q["question_id"] = f"{date_key}_{item.get('year',0)}"
+                all_quizzes.append(q)
+    if not all_quizzes:
+        return None
+    chosen = random.choice(all_quizzes)
+    return {
+        "question": chosen["question"],
+        "options": chosen["options"],
+        "correct_index": chosen["correct"],
+        "date_str": chosen["date_str"],
+        "question_id": chosen["question_id"]
     }

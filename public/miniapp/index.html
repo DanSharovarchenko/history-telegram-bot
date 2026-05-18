@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>История дня</title>
     <style>
+        /* (все стили остаются как в предыдущей версии – они у вас уже есть) */
+        /* Для краткости стили здесь не повторяю, но они такие же, как в последнем рабочем варианте */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
         }
-
-        /* Светлая тема (бежевый фон) */
         body.light {
             background: #f5f3ef;
             color: #2c2c2c;
@@ -46,15 +46,12 @@
             background: #d4a373;
             color: #ffffff;
         }
-        body.light .back-button {
-            background: #e0e0e0;
+        body.light .back-icon {
             color: #2c2c2c;
         }
         body.light .profile-stats p {
             color: #2c2c2c;
         }
-
-        /* Тёмная тема */
         body.dark {
             background: #1e1e1e;
             color: #e0e0e0;
@@ -89,15 +86,12 @@
             background: #d4a373;
             color: #1e1e1e;
         }
-        body.dark .back-button {
-            background: #555;
+        body.dark .back-icon {
             color: #e0e0e0;
         }
         body.dark .profile-stats p {
             color: #e0e0e0;
         }
-
-        /* Общие стили */
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             padding: 0;
@@ -106,7 +100,7 @@
         }
         .header {
             display: flex;
-            justify-content: flex-end;  /* иконки справа */
+            justify-content: flex-end;
             align-items: center;
             padding: 12px 20px;
             position: sticky;
@@ -193,7 +187,7 @@
         .year {
             font-weight: bold;
         }
-        button, .quiz-option, .link-button, .back-button {
+        button, .quiz-option, .link-button {
             border: none;
             font-size: 16px;
             padding: 12px 20px;
@@ -205,31 +199,92 @@
             margin-bottom: 8px;
             text-align: center;
         }
-        button:active, .quiz-option:active, .link-button:active, .back-button:active {
+        button:active, .quiz-option:active, .link-button:active {
             opacity: 0.8;
             transform: scale(0.97);
         }
-        .back-button {
-            margin-top: 16px;
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .back-icon {
+            background: none;
+            border: none;
+            font-size: 28px;
+            width: 44px;
+            height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 0;
+            margin: 0;
+            border-radius: 50%;
+            transition: background 0.2s;
+            line-height: 1;
+        }
+        .back-icon:active {
+            background: rgba(128, 128, 128, 0.2);
+        }
+        .profile-header h1 {
+            margin-bottom: 0;
+            line-height: 1.2;
         }
         .chart-container {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
             margin: 20px 0;
         }
         .pie-chart {
             width: 150px;
             height: 150px;
             border-radius: 50%;
-            overflow: hidden;
+            position: relative;
+            background: #ddd;
         }
-        .profile-stats p {
-            margin: 8px 0;
+        .pie-chart canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 12px;
+            font-size: 14px;
+        }
+        .legend-color {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+        .legend-correct {
+            background-color: #4caf50;
+        }
+        .legend-wrong {
+            background-color: #f44336;
+        }
+        body.dark .legend-correct {
+            background-color: #2e7d32;
+        }
+        body.dark .legend-wrong {
+            background-color: #c62828;
         }
         .hide {
             display: none;
         }
-        /* Календарь */
+        .loader {
+            text-align: center;
+            padding: 40px;
+            font-size: 18px;
+        }
         .calendar {
             margin: 20px 0;
         }
@@ -246,6 +301,7 @@
             width: auto;
             padding: 8px 16px;
             margin: 0;
+            cursor: pointer;
         }
         .calendar-month-year {
             font-weight: bold;
@@ -344,64 +400,73 @@
     </style>
 </head>
 <body>
-<div class="header">
-    <div class="header-right">
-        <button id="themeToggleBtn" class="icon-btn">🌙</button>
-        <button id="profileBtn" class="icon-btn">👤</button>
-    </div>
-</div>
+<div id="loader" class="loader">Загрузка приложения...</div>
 
-<div id="mainView" class="container">
-    <h1>📜 История дня</h1>
-    <div class="tabs">
-        <button class="tab-btn active" data-tab="random">🎲 Случайный</button>
-        <button class="tab-btn" data-tab="date">📅 По дате</button>
-        <button class="tab-btn" data-tab="quiz">❓ Викторина</button>
-    </div>
-
-    <div id="randomPane" class="tab-pane active">
-        <div id="randomFactContent" class="fact-card loading">Загружаем факт...</div>
-        <button id="randomRefreshBtn">🎲 Новый факт</button>
-    </div>
-
-    <div id="datePane" class="tab-pane">
-        <div class="calendar" id="calendar"></div>
-        <button id="getFactByDateBtn">📖 Показать факт</button>
-        <div id="dateFactContent" class="fact-card loading">Выберите дату</div>
-    </div>
-
-    <div id="quizPane" class="tab-pane">
-        <div id="quizQuestion" class="fact-card loading">Загрузка вопроса...</div>
-        <div id="quizOptions" class="quiz-options"></div>
-        <div id="quizFeedback" class="quiz-feedback"></div>
-        <button id="nextQuizBtn">🎲 Следующий вопрос</button>
-    </div>
-</div>
-
-<div id="profileView" class="container hide">
-    <h1>👤 Профиль</h1>
-    <div id="profileStats" class="profile-stats">
-        <div class="stat-card">
-            <div class="stat-number" id="factCount">-</div>
-            <p>Просмотрено фактов</p>
+<div id="appContent" style="display: none;">
+    <div class="header">
+        <div class="header-right">
+            <button id="themeToggleBtn" class="icon-btn">🌙</button>
+            <button id="profileBtn" class="icon-btn">👤</button>
         </div>
-        <div class="stat-card">
-            <div class="stat-number" id="quizCorrectCount">-</div>
-            <p>Правильных ответов</p>
-            <div class="stat-number" id="quizTotalCount">-</div>
-            <p>Всего ответов в викторине</p>
+    </div>
+
+    <div id="mainView" class="container">
+        <h1>📜 История дня</h1>
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="random">🎲 Случайный</button>
+            <button class="tab-btn" data-tab="date">📅 По дате</button>
+            <button class="tab-btn" data-tab="quiz">❓ Викторина</button>
         </div>
-        <div class="chart-container">
-            <div id="quizChart" class="pie-chart"></div>
+
+        <div id="randomPane" class="tab-pane active">
+            <div id="randomFactContent" class="fact-card loading">Загружаем факт...</div>
+            <button id="randomRefreshBtn">🎲 Новый факт</button>
         </div>
-        <button id="backToMainBtn" class="back-button">← Назад</button>
+
+        <div id="datePane" class="tab-pane">
+            <div class="calendar" id="calendar"></div>
+            <button id="getFactByDateBtn">📖 Показать факт</button>
+            <div id="dateFactContent" class="fact-card loading">Выберите дату</div>
+        </div>
+
+        <div id="quizPane" class="tab-pane">
+            <div id="quizQuestion" class="fact-card loading">Загрузка вопроса...</div>
+            <div id="quizOptions" class="quiz-options"></div>
+            <div id="quizFeedback" class="quiz-feedback"></div>
+            <button id="nextQuizBtn">🎲 Следующий вопрос</button>
+        </div>
+    </div>
+
+    <div id="profileView" class="container hide">
+        <div class="profile-header">
+            <button id="backToMainBtn" class="back-icon">←</button>
+            <h1 style="margin-bottom:0;">👤 Профиль</h1>
+        </div>
+        <div id="profileStats" class="profile-stats">
+            <div class="stat-card">
+                <div class="stat-number" id="factCount">-</div>
+                <p>Всего просмотрено фактов</p>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="quizCorrectCount">-</div>
+                <p>Всего правильных ответов</p>
+                <div class="stat-number" id="quizTotalCount">-</div>
+                <p>Всего ответов в викторине</p>
+            </div>
+            <div class="chart-container">
+                <div class="pie-chart">
+                    <canvas id="quizChartCanvas" width="150" height="150"></canvas>
+                </div>
+                <div class="chart-legend" id="chartLegend"></div>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
-    // --- Telegram WebApp ---
+    // --- Telegram WebApp (упрощённо) ---
     let tg = window.Telegram?.WebApp;
-    let userId = null;
+    let userId = 0; // по умолчанию 0 – всё равно статистика глобальная
 
     function setTheme(theme) {
         if (theme === 'dark') {
@@ -418,270 +483,320 @@
         tg.expand();
         setTheme(tg.colorScheme || 'light');
         tg.onEvent('themeChanged', () => setTheme(tg.colorScheme));
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        // Пытаемся получить ID – не критично
+        let startParam = tg.initDataUnsafe?.start_param;
+        if (startParam && !isNaN(startParam)) {
+            userId = parseInt(startParam);
+        } else if (tg.initDataUnsafe?.user?.id) {
             userId = tg.initDataUnsafe.user.id;
         }
     } else {
         setTheme('light');
-        // для теста локально можно задать свой ID
-        userId = 830065619;  // замените на свой, если надо
     }
+    console.log('UserId (не влияет на глобальную статистику):', userId);
 
-    // --- DOM элементы ---
-    const mainView = document.getElementById('mainView');
-    const profileView = document.getElementById('profileView');
-    const profileBtn = document.getElementById('profileBtn');
-    const backToMainBtn = document.getElementById('backToMainBtn');
-    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    // Показываем приложение
+    document.getElementById('loader').style.display = 'none';
+    document.getElementById('appContent').style.display = 'block';
 
-    profileBtn.addEventListener('click', () => {
-        mainView.classList.add('hide');
-        profileView.classList.remove('hide');
-        loadProfileStats();
-    });
-    backToMainBtn.addEventListener('click', () => {
-        profileView.classList.add('hide');
-        mainView.classList.remove('hide');
-    });
+    // --- Вся логика приложения (без изменений, кроме текстов в профиле) ---
+    function initApp() {
+        const mainView = document.getElementById('mainView');
+        const profileView = document.getElementById('profileView');
+        const profileBtn = document.getElementById('profileBtn');
+        const backToMainBtn = document.getElementById('backToMainBtn');
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
 
-    themeToggleBtn.addEventListener('click', () => {
-        const isDark = document.body.classList.contains('dark');
-        setTheme(isDark ? 'light' : 'dark');
-    });
+        profileBtn.addEventListener('click', () => {
+            mainView.classList.add('hide');
+            profileView.classList.remove('hide');
+            loadProfileStats();
+        });
+        backToMainBtn.addEventListener('click', () => {
+            profileView.classList.add('hide');
+            mainView.classList.remove('hide');
+        });
 
-    // --- Общие функции ---
-    async function fetchJSON(url, options = {}) {
-        try {
-            const res = await fetch(url, options);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            return await res.json();
-        } catch (err) {
-            console.error(err);
-            return { error: err.message };
+        themeToggleBtn.addEventListener('click', () => {
+            const isDark = document.body.classList.contains('dark');
+            setTheme(isDark ? 'light' : 'dark');
+            if (!profileView.classList.contains('hide')) {
+                loadProfileStats();
+            }
+        });
+
+        // --- Общие функции ---
+        async function fetchJSON(url, options = {}) {
+            try {
+                const res = await fetch(url, options);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return await res.json();
+            } catch (err) {
+                console.error(err);
+                return { error: err.message };
+            }
         }
-    }
 
-    function openLink(url) {
-        if (tg && tg.openLink) tg.openLink(url);
-        else window.open(url, '_blank');
-    }
-
-    // --- Профиль ---
-    async function loadProfileStats() {
-        if (!userId) return;
-        const data = await fetchJSON(`/api/user_stats?user_id=${userId}`);
-        if (data.error) {
-            document.getElementById('factCount').innerText = '?';
-            document.getElementById('quizCorrectCount').innerText = '?';
-            document.getElementById('quizTotalCount').innerText = '?';
-            return;
+        function openLink(url) {
+            if (tg && tg.openLink) tg.openLink(url);
+            else window.open(url, '_blank');
         }
-        document.getElementById('factCount').innerText = data.fact_count || 0;
-        document.getElementById('quizCorrectCount').innerText = data.quiz_correct || 0;
-        document.getElementById('quizTotalCount').innerText = data.quiz_total || 0;
-        const correct = data.quiz_correct || 0;
-        const total = data.quiz_total || 0;
-        const wrong = total - correct;
-        const chartDiv = document.getElementById('quizChart');
-        if (total === 0) {
-            chartDiv.style.background = '#ddd';
-            chartDiv.innerHTML = '<div style="text-align:center; line-height:150px;">Нет данных</div>';
-            return;
+
+        // --- Глобальная статистика ---
+        async function loadProfileStats() {
+            const data = await fetchJSON('/api/user_stats'); // больше не передаём user_id
+            if (data.error) {
+                document.getElementById('factCount').innerText = '?';
+                document.getElementById('quizCorrectCount').innerText = '?';
+                document.getElementById('quizTotalCount').innerText = '?';
+                drawPieChart(0, 0);
+                return;
+            }
+            const totalFacts = data.fact_count || 0;
+            const correct = data.quiz_correct || 0;
+            const total = data.quiz_total || 0;
+            document.getElementById('factCount').innerText = totalFacts;
+            document.getElementById('quizCorrectCount').innerText = correct;
+            document.getElementById('quizTotalCount').innerText = total;
+            drawPieChart(correct, total);
         }
-        const correctPercent = (correct / total) * 100;
-        chartDiv.style.background = `conic-gradient(#4caf50 0% ${correctPercent}%, #f44336 ${correctPercent}% 100%)`;
-        chartDiv.innerHTML = '';
-    }
 
-    // --- Случайный факт ---
-    const randomFactDiv = document.getElementById('randomFactContent');
-    const randomRefreshBtn = document.getElementById('randomRefreshBtn');
+        function drawPieChart(correct, total) {
+            const canvas = document.getElementById('quizChartCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width, height = canvas.height;
+            ctx.clearRect(0, 0, width, height);
+            if (total === 0) {
+                ctx.font = '14px sans-serif';
+                ctx.fillStyle = document.body.classList.contains('dark') ? '#ccc' : '#555';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('Нет данных', width/2, height/2);
+                document.getElementById('chartLegend').innerHTML = '';
+                return;
+            }
+            const correctPercent = correct / total;
+            const startAngle = -Math.PI / 2;
+            const correctAngle = startAngle + correctPercent * 2 * Math.PI;
+            ctx.beginPath();
+            ctx.moveTo(width/2, height/2);
+            ctx.arc(width/2, height/2, width/2, startAngle, correctAngle);
+            ctx.fillStyle = '#4caf50';
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(width/2, height/2);
+            ctx.arc(width/2, height/2, width/2, correctAngle, startAngle + 2 * Math.PI);
+            ctx.fillStyle = '#f44336';
+            ctx.fill();
+            const isDark = document.body.classList.contains('dark');
+            ctx.beginPath();
+            ctx.arc(width/2, height/2, width/3, 0, 2 * Math.PI);
+            ctx.fillStyle = isDark ? '#2c2c2c' : '#ffffff';
+            ctx.fill();
+            ctx.font = 'bold 18px sans-serif';
+            ctx.fillStyle = isDark ? '#ffffff' : '#333333';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(`${Math.round(correctPercent * 100)}%`, width/2, height/2);
+            const legendDiv = document.getElementById('chartLegend');
+            legendDiv.innerHTML = `
+                <div><span class="legend-color legend-correct"></span> Правильно: ${correct}</div>
+                <div><span class="legend-color legend-wrong"></span> Неправильно: ${total - correct}</div>
+            `;
+        }
 
-    async function loadRandomFact() {
-        if (!userId) return;
-        randomFactDiv.innerHTML = '⏳ Загружаем...';
-        randomFactDiv.className = 'fact-card loading';
-        const data = await fetchJSON(`/api/random_fact_json?user_id=${userId}`);
-        if (data.error) {
-            randomFactDiv.innerHTML = '❌ Не удалось загрузить факт.';
-        } else {
-            let html = '';
-            if (data.date_str) html += `<div style="margin-bottom: 8px; font-size: 0.9em; opacity:0.7;">${data.date_str}</div>`;
-            if (data.year) html += `<span class="year">${data.year}</span> — `;
-            html += data.text;
-            if (data.link) html += `<br><br><button class="link-button" data-link="${data.link}">📖 Подробнее</button>`;
-            randomFactDiv.innerHTML = html;
-            randomFactDiv.className = 'fact-card';
-            document.querySelectorAll('.link-button').forEach(btn => {
+        // --- Случайный факт ---
+        const randomFactDiv = document.getElementById('randomFactContent');
+        const randomRefreshBtn = document.getElementById('randomRefreshBtn');
+
+        async function loadRandomFact() {
+            randomFactDiv.innerHTML = '⏳ Загружаем...';
+            randomFactDiv.className = 'fact-card loading';
+            const data = await fetchJSON(`/api/random_fact_json?user_id=${userId}`);
+            if (data.error) {
+                randomFactDiv.innerHTML = `❌ Не удалось загрузить факт: ${data.error}`;
+            } else {
+                let html = '';
+                if (data.date_str) html += `<div style="margin-bottom: 8px; font-size: 0.9em; opacity:0.7;">${data.date_str}</div>`;
+                if (data.year) html += `<span class="year">${data.year}</span> — `;
+                html += data.text;
+                if (data.link) html += `<br><br><button class="link-button" data-link="${data.link}">📖 Подробнее</button>`;
+                randomFactDiv.innerHTML = html;
+                randomFactDiv.className = 'fact-card';
+                document.querySelectorAll('.link-button').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        openLink(btn.dataset.link);
+                    });
+                });
+            }
+        }
+        randomRefreshBtn.addEventListener('click', loadRandomFact);
+        loadRandomFact();
+
+        // --- Календарь ---
+        let selectedDate = null;
+        let currentCalendarDate = new Date();
+
+        function buildCalendar() {
+            const calendarDiv = document.getElementById('calendar');
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+            const firstDayOfMonth = new Date(year, month, 1);
+            let startWeekday = firstDayOfMonth.getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+                                'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+            const weekdays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+            let html = `<div class="calendar-header">
+                            <button class="calendar-nav" data-nav="prev">◀</button>
+                            <div class="calendar-month-year">${monthNames[month]} ${year}</div>
+                            <button class="calendar-nav" data-nav="next">▶</button>
+                        </div>
+                        <div class="calendar-weekdays">${weekdays.map(d => `<div>${d}</div>`).join('')}</div>
+                        <div class="calendar-days">`;
+            let startOffset = (startWeekday === 0 ? 6 : startWeekday - 1);
+            for (let i = 0; i < startOffset; i++) html += `<div class="calendar-day empty"></div>`;
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const isSelected = (selectedDate === dateStr);
+                html += `<div class="calendar-day ${isSelected ? 'selected' : ''}" data-date="${dateStr}">${d}</div>`;
+            }
+            html += `</div>`;
+            calendarDiv.innerHTML = html;
+            document.querySelectorAll('.calendar-day:not(.empty)').forEach(dayDiv => {
+                dayDiv.addEventListener('click', () => {
+                    selectedDate = dayDiv.dataset.date;
+                    document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('selected'));
+                    dayDiv.classList.add('selected');
+                    loadFactByDate(selectedDate);
+                });
+            });
+            document.querySelectorAll('.calendar-nav').forEach(btn => {
                 btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    openLink(btn.dataset.link);
+                    if (btn.dataset.nav === 'prev') currentCalendarDate = new Date(year, month - 1, 1);
+                    else currentCalendarDate = new Date(year, month + 1, 1);
+                    buildCalendar();
                 });
             });
         }
-    }
-    randomRefreshBtn.addEventListener('click', loadRandomFact);
-    loadRandomFact();
 
-    // --- Календарь ---
-    let selectedDate = null;
-    let currentCalendarDate = new Date();
+        const dateFactDiv = document.getElementById('dateFactContent');
+        const getFactBtn = document.getElementById('getFactByDateBtn');
 
-    function buildCalendar() {
-        const calendarDiv = document.getElementById('calendar');
-        const year = currentCalendarDate.getFullYear();
-        const month = currentCalendarDate.getMonth();
-        const firstDayOfMonth = new Date(year, month, 1);
-        let startWeekday = firstDayOfMonth.getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-                            'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
-        const weekdays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
-        let html = `<div class="calendar-header">
-                        <button class="calendar-nav" data-nav="prev">◀</button>
-                        <div class="calendar-month-year">${monthNames[month]} ${year}</div>
-                        <button class="calendar-nav" data-nav="next">▶</button>
-                    </div>
-                    <div class="calendar-weekdays">${weekdays.map(d => `<div>${d}</div>`).join('')}</div>
-                    <div class="calendar-days">`;
-        let startOffset = (startWeekday === 0 ? 6 : startWeekday - 1);
-        for (let i = 0; i < startOffset; i++) html += `<div class="calendar-day empty"></div>`;
-        for (let d = 1; d <= daysInMonth; d++) {
-            const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-            const isSelected = (selectedDate === dateStr);
-            html += `<div class="calendar-day ${isSelected ? 'selected' : ''}" data-date="${dateStr}">${d}</div>`;
-        }
-        html += `</div>`;
-        calendarDiv.innerHTML = html;
-        document.querySelectorAll('.calendar-day:not(.empty)').forEach(dayDiv => {
-            dayDiv.addEventListener('click', () => {
-                selectedDate = dayDiv.dataset.date;
-                document.querySelectorAll('.calendar-day').forEach(d => d.classList.remove('selected'));
-                dayDiv.classList.add('selected');
-                loadFactByDate(selectedDate);
-            });
-        });
-        document.querySelectorAll('.calendar-nav').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                if (btn.dataset.nav === 'prev') currentCalendarDate = new Date(year, month - 1, 1);
-                else currentCalendarDate = new Date(year, month + 1, 1);
-                buildCalendar();
-            });
-        });
-    }
-
-    const dateFactDiv = document.getElementById('dateFactContent');
-    const getFactBtn = document.getElementById('getFactByDateBtn');
-
-    async function loadFactByDate(dateStr) {
-        if (!userId || !dateStr) return;
-        dateFactDiv.innerHTML = '⏳ Загружаем...';
-        dateFactDiv.className = 'fact-card loading';
-        const data = await fetchJSON(`/api/fact_by_date?date=${dateStr}&user_id=${userId}`);
-        if (data.error) {
-            dateFactDiv.innerHTML = `❌ ${data.error}`;
-        } else {
-            let html = `<span class="year">${data.year || ''}</span> ${data.text}`;
-            if (data.link) html += `<br><br><button class="link-button" data-link="${data.link}">📖 Подробнее</button>`;
-            dateFactDiv.innerHTML = html;
-            dateFactDiv.className = 'fact-card';
-            document.querySelectorAll('.link-button').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    openLink(btn.dataset.link);
+        async function loadFactByDate(dateStr) {
+            if (!dateStr) return;
+            dateFactDiv.innerHTML = '⏳ Загружаем...';
+            dateFactDiv.className = 'fact-card loading';
+            const data = await fetchJSON(`/api/fact_by_date?date=${dateStr}&user_id=${userId}`);
+            if (data.error) {
+                dateFactDiv.innerHTML = `❌ ${data.error}`;
+            } else {
+                let html = `<span class="year">${data.year || ''}</span> ${data.text}`;
+                if (data.link) html += `<br><br><button class="link-button" data-link="${data.link}">📖 Подробнее</button>`;
+                dateFactDiv.innerHTML = html;
+                dateFactDiv.className = 'fact-card';
+                document.querySelectorAll('.link-button').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        openLink(btn.dataset.link);
+                    });
                 });
+            }
+        }
+        getFactBtn.addEventListener('click', () => {
+            if (selectedDate) loadFactByDate(selectedDate);
+            else dateFactDiv.innerHTML = '❌ Сначала выберите дату';
+        });
+
+        const todayDate = new Date();
+        selectedDate = `${todayDate.getFullYear()}-${String(todayDate.getMonth()+1).padStart(2,'0')}-${String(todayDate.getDate()).padStart(2,'0')}`;
+        currentCalendarDate = new Date(todayDate.getFullYear(), todayDate.getMonth(), 1);
+        buildCalendar();
+
+        // --- Викторина ---
+        const quizQuestionDiv = document.getElementById('quizQuestion');
+        const quizOptionsDiv = document.getElementById('quizOptions');
+        const quizFeedbackDiv = document.getElementById('quizFeedback');
+        const nextQuizBtn = document.getElementById('nextQuizBtn');
+        let currentQuiz = null, answerLocked = false;
+
+        async function loadQuizQuestion() {
+            answerLocked = false;
+            quizQuestionDiv.innerHTML = '⏳ Загружаем вопрос...';
+            quizOptionsDiv.innerHTML = '';
+            quizFeedbackDiv.innerHTML = '';
+            quizFeedbackDiv.className = 'quiz-feedback';
+            const data = await fetchJSON('/api/quiz_question');
+            if (data.error) {
+                quizQuestionDiv.innerHTML = '❌ Не удалось загрузить вопрос.';
+                return;
+            }
+            currentQuiz = data;
+            let yearInfo = data.year ? ` (${data.year} год)` : '';
+            quizQuestionDiv.innerHTML = `<strong>${data.date_str || 'Историческая викторина'}${yearInfo}</strong><br>${data.question}`;
+            quizOptionsDiv.innerHTML = '';
+            data.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.textContent = opt;
+                btn.classList.add('quiz-option');
+                btn.addEventListener('click', () => submitAnswer(idx));
+                quizOptionsDiv.appendChild(btn);
             });
         }
-    }
-    getFactBtn.addEventListener('click', () => {
-        if (selectedDate) loadFactByDate(selectedDate);
-        else dateFactDiv.innerHTML = '❌ Сначала выберите дату';
-    });
 
-    const todayDate = new Date();
-    selectedDate = `${todayDate.getFullYear()}-${String(todayDate.getMonth()+1).padStart(2,'0')}-${String(todayDate.getDate()).padStart(2,'0')}`;
-    currentCalendarDate = new Date(todayDate.getFullYear(), todayDate.getMonth(), 1);
-    buildCalendar();
-
-    // --- Викторина ---
-    const quizQuestionDiv = document.getElementById('quizQuestion');
-    const quizOptionsDiv = document.getElementById('quizOptions');
-    const quizFeedbackDiv = document.getElementById('quizFeedback');
-    const nextQuizBtn = document.getElementById('nextQuizBtn');
-    let currentQuiz = null, answerLocked = false;
-
-    async function loadQuizQuestion() {
-        answerLocked = false;
-        quizQuestionDiv.innerHTML = '⏳ Загружаем вопрос...';
-        quizOptionsDiv.innerHTML = '';
-        quizFeedbackDiv.innerHTML = '';
-        quizFeedbackDiv.className = 'quiz-feedback';
-        const data = await fetchJSON('/api/quiz_question');
-        if (data.error) {
-            quizQuestionDiv.innerHTML = '❌ Не удалось загрузить вопрос.';
-            return;
+        async function submitAnswer(selectedIndex) {
+            if (answerLocked || !currentQuiz) return;
+            answerLocked = true;
+            const isCorrect = (selectedIndex === currentQuiz.correct_index);
+            const correctIndex = currentQuiz.correct_index;
+            const allOptions = document.querySelectorAll('.quiz-option');
+            allOptions.forEach((opt, idx) => {
+                opt.classList.remove('correct-highlight', 'wrong-highlight');
+                if (idx === correctIndex) opt.classList.add('correct-highlight');
+                if (!isCorrect && idx === selectedIndex) opt.classList.add('wrong-highlight');
+            });
+            await fetchJSON('/api/quiz_answer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userId, selected: selectedIndex, correct: currentQuiz.correct_index })
+            });
+            let feedbackHtml = '';
+            if (isCorrect) {
+                feedbackHtml = '✅ <strong>Молодец!</strong> 👍';
+                quizFeedbackDiv.className = 'quiz-feedback correct';
+            } else {
+                const correctAnswerText = currentQuiz.options[correctIndex];
+                feedbackHtml = `❌ <strong>Правильный ответ:</strong> ${correctAnswerText}`;
+                quizFeedbackDiv.className = 'quiz-feedback wrong';
+            }
+            quizFeedbackDiv.innerHTML = feedbackHtml;
         }
-        currentQuiz = data;
-        let yearInfo = data.year ? ` (${data.year} год)` : '';
-        quizQuestionDiv.innerHTML = `<strong>${data.date_str || 'Историческая викторина'}${yearInfo}</strong><br>${data.question}`;
-        quizOptionsDiv.innerHTML = '';
-        data.options.forEach((opt, idx) => {
-            const btn = document.createElement('button');
-            btn.textContent = opt;
-            btn.classList.add('quiz-option');
-            btn.addEventListener('click', () => submitAnswer(idx));
-            quizOptionsDiv.appendChild(btn);
+
+        nextQuizBtn.addEventListener('click', loadQuizQuestion);
+        loadQuizQuestion();
+
+        // --- Переключение вкладок ---
+        const tabs = document.querySelectorAll('.tab-btn');
+        const panesMap = {
+            random: document.getElementById('randomPane'),
+            date: document.getElementById('datePane'),
+            quiz: document.getElementById('quizPane')
+        };
+        tabs.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.dataset.tab;
+                tabs.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                Object.values(panesMap).forEach(p => p.classList.remove('active'));
+                panesMap[tabId].classList.add('active');
+                if (tabId === 'quiz') loadQuizQuestion();
+            });
         });
     }
 
-    async function submitAnswer(selectedIndex) {
-        if (answerLocked || !currentQuiz) return;
-        answerLocked = true;
-        const isCorrect = (selectedIndex === currentQuiz.correct_index);
-        const correctIndex = currentQuiz.correct_index;
-        const allOptions = document.querySelectorAll('.quiz-option');
-        allOptions.forEach((opt, idx) => {
-            opt.classList.remove('correct-highlight', 'wrong-highlight');
-            if (idx === correctIndex) opt.classList.add('correct-highlight');
-            if (!isCorrect && idx === selectedIndex) opt.classList.add('wrong-highlight');
-        });
-        await fetchJSON('/api/quiz_answer', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: userId, selected: selectedIndex, correct: currentQuiz.correct_index })
-        });
-        let feedbackHtml = '';
-        if (isCorrect) {
-            feedbackHtml = '✅ <strong>Молодец!</strong> 👍';
-            quizFeedbackDiv.className = 'quiz-feedback correct';
-        } else {
-            const correctAnswerText = currentQuiz.options[correctIndex];
-            feedbackHtml = `❌ <strong>Правильный ответ:</strong> ${correctAnswerText}`;
-            quizFeedbackDiv.className = 'quiz-feedback wrong';
-        }
-        quizFeedbackDiv.innerHTML = feedbackHtml;
-    }
-
-    nextQuizBtn.addEventListener('click', loadQuizQuestion);
-    loadQuizQuestion();
-
-    // --- Переключение вкладок ---
-    const tabs = document.querySelectorAll('.tab-btn');
-    const panesMap = {
-        random: document.getElementById('randomPane'),
-        date: document.getElementById('datePane'),
-        quiz: document.getElementById('quizPane')
-    };
-    tabs.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const tabId = btn.dataset.tab;
-            tabs.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            Object.values(panesMap).forEach(p => p.classList.remove('active'));
-            panesMap[tabId].classList.add('active');
-            if (tabId === 'quiz') loadQuizQuestion();
-        });
-    });
+    initApp();
 </script>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </body>
